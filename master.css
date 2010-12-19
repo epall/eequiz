@@ -1,0 +1,15 @@
+.resistor {
+  width: 150px;
+  height: 50px;
+  border: thin solid black;
+  margin: 5px;
+  background-color: #CCCC9F;
+}
+
+.resistor div {
+  width: 20px;
+  height: 50px;
+  margin-left: 5px;
+  margin-right: 5px;
+  float: left;
+}
