@@ -1,40 +1,55 @@
-var DIGIT_COLORS = {
-  '0': 'black',
-  '1': 'brown',
-  '2': 'red',
-  '3': 'orange',
-  '4': 'yellow',
-  '5': 'green',
-  '6': 'blue',
-  '7': 'purple',
-  '8': 'grey',
-  '9': 'white'
-}
-
-var POWER_COLORS = {
-  '': 'black',
-  '0': 'brown',
-  '00': 'red',
-  '000': 'orange',
-  '0000': 'yellow',
-  '00000': 'green',
-  '000000': 'blue',
-  '0000000': 'purple',
-  '00000000': 'grey',
-  '000000000': 'white'
-}
+var RESISTOR_KEY = [
+  ['black', '0', 'black'],
+  ['brown', '1', 'brown'],
+  ['red', '2', 'red'],
+  ['orange', '3', 'orange'],
+  ['yellow', '4', 'yellow'],
+  ['green', '5', 'green'],
+  ['blue', '6', 'blue'],
+  ['violet', '7', 'violet'],
+  ['gray', '8', 'gray'],
+  ['white', '9', 'white']
+]
 
 var POWER_POSTFIXES = {
   'k': 3,
   'M': 6
 }
 
+function digit_color(digit){
+  for(var i = 0; i < RESISTOR_KEY.length; i++){
+    var row = RESISTOR_KEY[i];
+    if(row[1] == digit){
+      return row[2];
+    }
+  }
+  return null;
+}
+
+function power_color(power){
+  for(var i = 0; i < RESISTOR_KEY.length; i++){
+    var row = RESISTOR_KEY[i];
+    if(row[1] == power.length){
+      return row[2];
+    }
+  }
+  return null;
+}
+
+function power_to_multiplier(power){
+  var multiplier = "1";
+  for(var i = 0; i < power; i++){
+    multiplier += "0";
+  }
+  return multiplier;
+}
+
 function ohms_to_colors(ohms){
   var str_ohms = ohms + "";
-  var first_band = DIGIT_COLORS[str_ohms[0]];
-  var second_band = DIGIT_COLORS[str_ohms[1]];
+  var first_band = digit_color(str_ohms[0]);
+  var second_band = digit_color(str_ohms[1]);
   var rest = str_ohms.substr(2);
-  var third_band = POWER_COLORS[rest];
+  var third_band = power_color(rest);
   return [first_band, second_band, third_band];
 }
 
@@ -49,11 +64,28 @@ function text_to_ohms(text){
 }
 
 function random_resistor(){
-  var value = Math.round(Math.random()*100);
-  var power = Math.round(Math.random()*7);
-  value = value * Math.pow(10, power);
+  var value = 0;
+  while(value < 10){
+    value = Math.round(Math.random()*100);
+    var power = Math.round(Math.random()*7);
+    value = value * Math.pow(10, power);
+  }
   return value;
 }
+
+function generate_key(){
+  var key = $('#resistor_key tbody');
+  for(var i = 0; i < RESISTOR_KEY.length; i++){
+    var row = RESISTOR_KEY[i];
+    var color = row[2];
+    $('<tr><td style="background-color:'+color+'">'+row[0]+'</td> \
+    <td style="background-color:'+color+'">'+row[1]+'</td> \
+    <td style="background-color:'+color+'">'+row[1]+'</td> \
+    <td style="background-color:'+color+'">x'+power_to_multiplier(row[1])+'</td> \
+    </tr>').appendTo(key);
+  }
+}
+
 
 (function($) {
   $.template('resistor-question', '<tr><td class="question"><div class="resistor"> \
@@ -64,13 +96,14 @@ function random_resistor(){
   <td class="answer"><input type="text" size="5"></td>\
   </tr>');
 
-  var app = $.sammy(function() {
+  app = $.sammy(function() {
     this.element_selector = "#main";
     this.get('#/', function(context) {
     });
 
 
     this.get('#/resistor_quiz', function(context) {
+      generate_key();
       context.$element().empty();
       $('<form action="#/resistor_quiz" method="post"><table><tbody></tbody></table></form>').appendTo(context.$element());
       resistor_answers = [];
@@ -85,6 +118,7 @@ function random_resistor(){
           'v3': colors[2]}).appendTo(table);
       }
       $('<tr><td colspan="2"><input type="submit" value="Submit"></td></tr>').appendTo(table);
+
       $('tr:first input').focus();
     });
 
@@ -94,12 +128,14 @@ function random_resistor(){
       $('.answer input').each(function(){
         var answer = resistor_answers[index];
         if(answer == text_to_ohms(this.value)){
+          $('<td><img src="images/check.png"></td>').appendTo($(this).parents('tr'));
           correct += 1;
+        } else {
+          $('<td><img src="images/x.png"></td>').appendTo($(this).parents('tr'));
         }
         index++;
       });
-      context.$element().empty();
-      $("<p>You got "+correct+" out of "+(index+1)+' correct. <a href="#/resistor_quiz">Play again</a> </p>').appendTo(context.$element());
+      $("<p>You got "+correct+" out of "+index+' correct. <a href="javascript:app.runRoute(\'get\', \'#/resistor_quiz\')">Play again</a> </p>').appendTo(context.$element());
     });
   });
 
